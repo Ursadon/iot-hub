@@ -12,6 +12,7 @@
 #include "RF24_config.h"
 #include "nrf24.h"
 #include "string.h"
+
 /****************************************************************************/
 
 // Передаёт и принимает 1 байт по SPI, возвращает полученное значение
@@ -549,11 +550,6 @@ void errNotify(){
 //Similar to the previous write, clears the interrupt flags
 uint8_t radio_write_multicast( const void* buf, uint8_t len, const uint8_t multicast )
 {
-	const uint8_t* current = (const uint8_t*)(buf);
-	volatile uint8_t data[32];
-	for (int j = 0; j < len; j++) {
-		data[j] = current[j];
-	}
 	uint8_t rbuf[5];
 	read_register_buf(RX_ADDR_P0,rbuf, addr_width);
 	read_register_buf(TX_ADDR,rbuf, addr_width);

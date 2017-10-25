@@ -24,7 +24,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * File:   misc.h
  * Author: NikolayL
  *
@@ -34,7 +34,7 @@
 #ifndef MISC_H
 #define MISC_H
 
-#ifdef _DEBUG_
+#ifdef _PRINTF_DEBUG_
 	#define __DEBUG(...) __VA_ARGS__
 #else
 	#define __DEBUG(...)

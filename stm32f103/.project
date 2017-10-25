@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>Mesh</name>
+	<name>iot-hub</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -25,4 +25,16 @@
 		<nature>fr.ac6.mcu.ide.core.MCUProjectNature</nature>
 		<nature>fr.ac6.mcu.ide.core.MCUSingleCoreProjectNature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>inc/NRP.h</name>
+			<type>1</type>
+			<location>D:/Dropbox/Priv/Projects/iot-hub/arm/include/NRP.h</location>
+		</link>
+		<link>
+			<name>src/NRP.c</name>
+			<type>1</type>
+			<location>D:/Dropbox/Priv/Projects/iot-hub/arm/src/NRP.c</location>
+		</link>
+	</linkedResources>
 </projectDescription>

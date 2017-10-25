@@ -4,7 +4,7 @@
 
 #include "NRP.h"
 #include "main.h"
-#include "misc.h"
+#include "additionals.h"
 
 char* c_printDate() {
 	static char time_buffer[80];
@@ -117,7 +117,7 @@ void uRIP_deleteRecord(uint8_t route) {
 	routingTable[route_id][Metrics] = 0xff;
 	routingTable[route_id][NextHop] = 0xff;
 	routingTableCount++;
-	printf("%s%s%s <internal> [info] Delete route: 0x%02X %s\n", CYAN, c_printDate(), BLUE, (unsigned int) route, RESET);
+	__DEBUG(printf("%s%s%s <internal> [info] Delete route: 0x%02X %s\n", CYAN, c_printDate(), BLUE, (unsigned int) route, RESET););
 
 }
 uint8_t uRIP_lookuphost(uint8_t host) {

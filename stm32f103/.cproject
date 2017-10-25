@@ -19,8 +19,9 @@
 						<toolChain id="fr.ac6.managedbuild.toolchain.gnu.cross.exe.debug.1704850371" name="Ac6 STM32 MCU GCC" superClass="fr.ac6.managedbuild.toolchain.gnu.cross.exe.debug">
 							<option id="fr.ac6.managedbuild.option.gnu.cross.mcu.1250906695" name="Mcu" superClass="fr.ac6.managedbuild.option.gnu.cross.mcu" useByScannerDiscovery="false" value="STM32F103C8Tx" valueType="string"/>
 							<option id="fr.ac6.managedbuild.option.gnu.cross.board.1810796877" name="Board" superClass="fr.ac6.managedbuild.option.gnu.cross.board" useByScannerDiscovery="false" value="genericBoard" valueType="string"/>
+							<option id="fr.ac6.managedbuild.option.gnu.cross.prefix.414961698" name="Prefix" superClass="fr.ac6.managedbuild.option.gnu.cross.prefix" useByScannerDiscovery="false" value="arm-none-eabi-" valueType="string"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="fr.ac6.managedbuild.targetPlatform.gnu.cross.1033826364" isAbstract="false" osList="all" superClass="fr.ac6.managedbuild.targetPlatform.gnu.cross"/>
-							<builder buildPath="${workspace_loc:/Mesh}/Debug" id="fr.ac6.managedbuild.builder.gnu.cross.1179961746" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="fr.ac6.managedbuild.builder.gnu.cross"/>
+							<builder buildPath="${workspace_loc:/iot-hub}/Debug" enableAutoBuild="false" id="fr.ac6.managedbuild.builder.gnu.cross.1179961746" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="fr.ac6.managedbuild.builder.gnu.cross"/>
 							<tool id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.1033199739" name="MCU GCC Compiler" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler">
 								<option id="fr.ac6.managedbuild.gnu.c.compiler.option.optimization.level.636604309" name="Optimization Level" superClass="fr.ac6.managedbuild.gnu.c.compiler.option.optimization.level" useByScannerDiscovery="false" value="fr.ac6.managedbuild.gnu.c.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.debugging.level.1673405901" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.max" valueType="enumerated"/>
@@ -37,11 +38,13 @@
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/inc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/CMSIS/device&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/CMSIS/core&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;D:\Dropbox\Priv\Projects\Mesh\FreeRTOS\include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;D:\Dropbox\Priv\Projects\Mesh\FreeRTOS&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;D:\Dropbox\Priv\Projects\Mesh\NRF24&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/FreeRTOS/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/FreeRTOS&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/NRF24&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;D:\Dropbox\Priv\Projects\iot-hub\arm\include&quot;"/>
 								</option>
 								<option id="gnu.c.compiler.option.dialect.std.540918862" name="Language standard" superClass="gnu.c.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.c.compiler.dialect.default" valueType="enumerated"/>
+								<option id="gnu.c.compiler.option.include.files.1892571725" name="Include files (-include)" superClass="gnu.c.compiler.option.include.files" useByScannerDiscovery="false" valueType="includeFiles"/>
 								<inputType id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.c.512228672" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.c"/>
 								<inputType id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.s.648488244" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.s"/>
 							</tool>
@@ -63,9 +66,6 @@
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/inc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/CMSIS/device&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/CMSIS/core&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;D:\Dropbox\Priv\Projects\Mesh\FreeRTOS\include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;D:\Dropbox\Priv\Projects\Mesh\FreeRTOS&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;D:\Dropbox\Priv\Projects\Mesh\NRF24&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1169670155" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 								<inputType id="fr.ac6.managedbuild.tool.gnu.cross.assembler.input.2114199351" superClass="fr.ac6.managedbuild.tool.gnu.cross.assembler.input"/>
@@ -98,7 +98,7 @@
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
 		<configuration configurationName="Debug">
-			<resource resourceType="PROJECT" workspacePath="/Mesh"/>
+			<resource resourceType="PROJECT" workspacePath="/iot-hub"/>
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>

@@ -17,6 +17,7 @@
 #include "nRF24L01.h"
 #include "NRP.h"
 #include <string.h>
+#include "additionals.h"
 
 #define UNUSED __attribute__ ((unused))
 unsigned char data[] = { 0xAA, 0xBA, 0xCA, 0xFA };
@@ -144,7 +145,6 @@ int main(void) {
 	for (unsigned long j = 0; j < 50000; ++j) {
 		__NOP();
 	}
-	rx_addr = 0x07;
 
 	radio_begin();                           // Setup and configure rf radio
 	setChannel(82);
@@ -162,9 +162,10 @@ int main(void) {
 
 	uRIP_flush();
 
-	radio_openWritingPipe(0x00);
-	radio_openReadingPipe(1, 0x00);
-	radio_openReadingPipe(2, rx_addr);
+	radio_openWritingPipe(0xA8A8A8A8A0LL);
+	radio_openReadingPipe(1, BASEADDR);
+	radio_openReadingPipe(2, convertPipeAddress(rx_addr));
+
 	radio_startListening();
 
 	xSPIsemaphore = xSemaphoreCreateMutex();
