@@ -17,6 +17,7 @@
 #include "nRF24L01.h"
 #include "NRP.h"
 #include <string.h>
+#include <stdbool.h>
 #include "additionals.h"
 
 #define UNUSED __attribute__ ((unused))
@@ -28,6 +29,15 @@ SemaphoreHandle_t xSPIsemaphore;
  * A2 - CE
  * A1 - CSN
  */
+bool radio_send(uint64_t address, const void* buf, uint8_t len,
+		const bool multicast) {
+	bool rval;
+	radio_openWritingPipe(BASEADDR + address);
+	radio_stopListening();
+	rval = radio_write_multicast(buf, len, multicast);
+	radio_startListening();
+	return rval;
+}
 
 void nrf24_setupPins(void) {
 	SPI_InitTypeDef SPI_InitStructure;
@@ -82,8 +92,8 @@ void vScanRF(void *pvParameters) {
 
 				len = radio_getDynamicPayloadSize();
 				radio_read(receivePayload, len);
+				// Display it on screen
 				if ((receivePayload[0] >> 4) == 1 && len >= 5) { // Protocol packet! Header rcvd
-
 					packet.version = receivePayload[0] >> 4;
 					packet.type = receivePayload[0] & 0x0F;
 					packet.destination = receivePayload[1];
@@ -96,6 +106,8 @@ void vScanRF(void *pvParameters) {
 						};
 					}
 					NRP_parsePacket(packet);
+				} else {
+					// error!
 				}
 				/* We have finished accessing the shared resource.  Release the
 				 semaphore. */
@@ -110,7 +122,7 @@ void vDiscovery(void *pvParameters) {
 		if ( xSemaphoreTake( xSPIsemaphore, ( TickType_t ) 1000 ) == pdTRUE) {
 			radio_openWritingPipe(0x00);
 			radio_stopListening();
-			uRIP_sendUpdate(0x00);
+			uRIP_sendRoutes(0x00);
 			radio_startListening();
 			xSemaphoreGive(xSPIsemaphore);
 		}
@@ -162,9 +174,9 @@ int main(void) {
 
 	uRIP_flush();
 
-	radio_openWritingPipe(0xA8A8A8A8A0LL);
-	radio_openReadingPipe(1, BASEADDR);
-	radio_openReadingPipe(2, convertPipeAddress(rx_addr));
+	radio_openWritingPipe(0x00);
+	radio_openReadingPipe(1, 0x00);
+	radio_openReadingPipe(2, rx_addr);
 
 	radio_startListening();
 

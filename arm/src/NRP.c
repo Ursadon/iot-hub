@@ -6,6 +6,7 @@
 #include "main.h"
 #include "additionals.h"
 
+#ifdef _PRINTF_DEBUG_
 char* c_printDate() {
 	static char time_buffer[80];
 	time_t rawtime;
@@ -16,7 +17,7 @@ char* c_printDate() {
 			timeinfo);
 	return time_buffer;
 }
-
+#endif
 void bubble_sort() {
 	int i, s = 1;
 	uint8_t key1, key2, key3;
@@ -64,6 +65,7 @@ void NRP_parsePacket(NRP_packet packet) {
 		return;
 	}
 	if (packet.type == uRIP_update) { // uRIP update
+		if pack
 		__DEBUG(printf("%s%s%s-> [RX] [info] uRIP request for my routes %s\n", CYAN, c_printDate(), WHITE, RESET););
 
 		// TODO: проверять корректность данных 0 остаток от деления на 3 должен быть равен 0

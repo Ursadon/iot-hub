@@ -30,11 +30,11 @@
  *
  * Created on October 9, 2017, 12:58 AM
  */
-#include <stdint.h>
-#include <stdbool.h>
-
 #ifndef NRP_H
 #define NRP_H
+
+#include <stdint.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,7 +45,7 @@ const uint8_t rx_addr = 0x17;
 #elif _OPI_
 const uint8_t rx_addr = 0xA7;
 #else
-const uint8_t rx_addr = 0x07;
+static const uint8_t rx_addr = 0x07;
 #endif
 
 #define BASEADDR 0xA0A1F0F100LL
