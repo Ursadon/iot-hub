@@ -45,17 +45,17 @@ uint64_t convertPipeAddress(uint8_t address) {
 	return BASEADDR + (uint64_t) address;
 }
 
-uint8_t NRP_send_packet(uint8_t host, NRP_packet packet) {
+bool NRP_send_packet(uint8_t host, NRP_packet packet) {
 	uint8_t header = (packet.version << 4) + packet.type;
 	uint8_t buf[32] = { header, packet.destination, packet.source, 0 };
 
-	for (int i = 0; i < packet._length; i++) {
+	for (int i = 0; i < (uint8_t)packet._length; i++) {
 		buf[i + 4] = packet.data[i];
 	}
 	if (host == 0x00) { // is multicast?
 		return radio_send(host, buf, 4 + packet._length, 1);
 	} else {
-	return radio_send(host, buf, 4 + packet._length, 0);
+		return radio_send(host, buf, 4 + packet._length, 0);
 	}
 }
 
@@ -65,7 +65,6 @@ void NRP_parsePacket(NRP_packet packet) {
 		return;
 	}
 	if (packet.type == uRIP_update) { // uRIP update
-		if pack
 		__DEBUG(printf("%s%s%s-> [RX] [info] uRIP request for my routes %s\n", CYAN, c_printDate(), WHITE, RESET););
 
 		// TODO: проверять корректность данных 0 остаток от деления на 3 должен быть равен 0

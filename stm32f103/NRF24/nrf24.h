@@ -69,7 +69,6 @@ typedef enum { RF24_CRC_DISABLED = 0, RF24_CRC_8, RF24_CRC_16 } rf24_crclength_e
    *  These are the main methods you need to operate the chip
    */
   void delayMicroseconds (uint64_t ticks);
-  uint8_t radio_is_interrupt();
 
   /**
    * Begin operation of the chip
@@ -538,7 +537,7 @@ s   *
    *
    * @return Current value of status register
    */
-  uint8_t flush_tx(void);
+  uint8_t radio_flush_tx(void);
 
   /**
    * Test whether there was a carrier on the line for the
@@ -883,7 +882,7 @@ s   *
    *
    * @return Current value of status register
    */
-  uint8_t flush_rx(void);
+  uint8_t radio_flush_rx(void);
 
 
   /**

@@ -35,6 +35,7 @@ bool radio_send(uint64_t address, const void* buf, uint8_t len,
 	radio_openWritingPipe(BASEADDR + address);
 	radio_stopListening();
 	rval = radio_write_multicast(buf, len, multicast);
+	GPIOC->ODR ^= GPIO_Pin_13;
 	radio_startListening();
 	return rval;
 }
@@ -79,17 +80,28 @@ void nrf24_setupPins(void) {
 	SPI_Cmd(SPI1, ENABLE);
 }
 
+uint8_t radio_is_interrupt() {
+	if(!GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_0)){
+		if ( xSemaphoreTake( xSPIsemaphore, ( TickType_t ) 1000 ) == pdTRUE) {
+			if ( read_register(NRF_STATUS) & _BV(RX_DR) ){
+				xSemaphoreGive(xSPIsemaphore);
+				return 1;
+			}
+			xSemaphoreGive(xSPIsemaphore);
+		}
+	}
+	return 0;
+}
 void vScanRF(void *pvParameters) {
 	uint8_t receivePayload[32];
-	uint8_t len;
+	static uint8_t len;
 	NRP_packet packet;
 
 	for (;;) {
-		if (radio_available()) {
+		if (radio_is_interrupt()) {
 			if ( xSemaphoreTake( xSPIsemaphore, ( TickType_t ) 1000 ) == pdTRUE) {
 				/* We were able to obtain the semaphore and can now access the
 				 shared resource. */
-
 				len = radio_getDynamicPayloadSize();
 				radio_read(receivePayload, len);
 				// Display it on screen
@@ -100,7 +112,7 @@ void vScanRF(void *pvParameters) {
 					packet.source = receivePayload[2];
 					packet.ttl = receivePayload[3];
 					packet._length = len - 4;
-					if (packet._length > 0) {
+					if ((uint8_t)packet._length > 0) {
 						for (int i = 0; i < packet._length; i++) {
 							packet.data[i] = receivePayload[4 + i];
 						};
@@ -120,13 +132,13 @@ void vScanRF(void *pvParameters) {
 void vDiscovery(void *pvParameters) {
 	while (1) {
 		if ( xSemaphoreTake( xSPIsemaphore, ( TickType_t ) 1000 ) == pdTRUE) {
-			radio_openWritingPipe(0x00);
-			radio_stopListening();
+//			radio_stopListening();
+//			radio_send(0x00,data,4,1);
+//			radio_startListening();
 			uRIP_sendRoutes(0x00);
-			radio_startListening();
 			xSemaphoreGive(xSPIsemaphore);
 		}
-		vTaskDelay(5000);
+		vTaskDelay(2000);
 	}
 }
 void vLed(UNUSED void *pvParameters) {
@@ -138,10 +150,10 @@ void vLed(UNUSED void *pvParameters) {
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOC, &GPIO_InitStructure);
 
-	for (;;) {
-		GPIO_ResetBits(GPIOC, GPIO_Pin_13);
-		vTaskDelay(500);
-		GPIO_SetBits(GPIOC, GPIO_Pin_13);
+	for (;;) { //-V776
+//		GPIO_ResetBits(GPIOC, GPIO_Pin_13);
+//		vTaskDelay(500);
+//		GPIO_SetBits(GPIOC, GPIO_Pin_13);
 		vTaskDelay(500);
 	}
 }
@@ -159,7 +171,7 @@ int main(void) {
 	}
 
 	radio_begin();                           // Setup and configure rf radio
-	setChannel(82);
+	setChannel(40);
 	setPALevel(RF24_PA_MAX);
 	setDataRate(RF24_2MBPS);
 	setAutoAck(1);
@@ -168,7 +180,7 @@ int main(void) {
 	setPayloadSize(32);
 	radio_setRetries(5, 15); // Optionally, increase the delay between retries & # of retries
 	setCRCLength(RF24_CRC_16);          // Use 8-bit CRC for performance
-	for (unsigned long j = 0; j < 50000; ++j) {
+	for (unsigned long j = 0; j < 500000LL; ++j) {
 		__NOP();
 	}
 
@@ -177,7 +189,8 @@ int main(void) {
 	radio_openWritingPipe(0x00);
 	radio_openReadingPipe(1, 0x00);
 	radio_openReadingPipe(2, rx_addr);
-
+	radio_flush_tx();
+	radio_flush_rx();
 	radio_startListening();
 
 	xSPIsemaphore = xSemaphoreCreateMutex();
@@ -189,4 +202,4 @@ int main(void) {
 	xTaskCreate(vDiscovery, "vDiscovery", configMINIMAL_STACK_SIZE, NULL,
 	tskIDLE_PRIORITY + 1, (xTaskHandle *) NULL);
 	vTaskStartScheduler();
-}
+} //-V591

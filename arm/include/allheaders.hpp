@@ -34,6 +34,7 @@
 #ifndef ALLHEADERS_HPP
 #define ALLHEADERS_HPP
 
+#include <additionals.h>
 #include <cstdlib>
 #include <iostream>
 #include <iomanip>
@@ -41,7 +42,6 @@
 #include <boost/thread.hpp>
 #include <boost/algorithm/string.hpp>
 #include "NRP.h"
-#include "misc.h"
 
 
 #endif /* ALLHEADERS_HPP */

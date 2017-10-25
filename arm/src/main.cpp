@@ -27,6 +27,7 @@
  *
  */
 
+#include <additionals.h>
 #include <cstdlib>
 #include <iostream>
 #include <iomanip>
@@ -34,7 +35,6 @@
 #include <boost/thread.hpp>
 #include <boost/algorithm/string.hpp>
 #include "NRP.h"
-#include "misc.h"
 #include "main.h"
 
 using namespace std;
@@ -60,7 +60,7 @@ bool radio_send(uint64_t address, const void* buf, uint8_t len, const bool multi
 	return rval;
 }
 
-#ifdef _DEBUG_
+#ifdef _PRINTF_DEBUG_
 string printDate() {
 	char time_buffer[80];
 	time_t rawtime;
@@ -118,7 +118,7 @@ void jobRX() {
 				packet.source = receivePayload[2];
 				packet.ttl = receivePayload[3];
 				packet._length = len - 4;
-				if (packet._length > 0) {
+				if ((uint8_t)packet._length > 0) {
 					for (int i = 0; i < packet._length; i++) {
 						packet.data[i] = receivePayload[4 + i];
 					};
@@ -150,7 +150,7 @@ void jobRouting() {
 				<< (unsigned int) routingTableCount << ")" << RESET << endl;
 		uRIP_sendRoutes(0x00);
 		nrf_.unlock();
-		boost::this_thread::sleep_for(boost::chrono::seconds(5));
+		boost::this_thread::sleep_for(boost::chrono::seconds(2));
 	}
 }
 
@@ -238,7 +238,7 @@ int main(int argc, char** argv) {
 	radio.setRetries(0, 2);
 	radio.setDataRate(RF24_2MBPS);
 	radio.setPALevel(RF24_PA_MAX);
-	radio.setChannel(82);
+	radio.setChannel(40);
 	radio.setCRCLength(RF24_CRC_16);
 
 	// Open 6 pipes for readings ( 5 plus pipe0, also can be used for reading )

@@ -67,7 +67,7 @@ typedef struct NRP_packet     //Создаем структуру!
     uint8_t _length;
 } NRP_packet;
 
-uint8_t NRP_send_packet(uint8_t host, NRP_packet packet);
+bool NRP_send_packet(uint8_t host, NRP_packet packet);
 void NRP_parsePacket(NRP_packet packet);
 
 uint8_t uRIP_lookuphost(uint8_t host);

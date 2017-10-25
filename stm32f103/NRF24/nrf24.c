@@ -32,13 +32,13 @@ uint8_t _SPItransfer(uint8_t data) {
 }
 
 void delay (uint64_t ticks) {
-	for (unsigned long j = 0; j < ticks*1000; ++j) {
+	for (unsigned long long j = 0; j < ticks*72000; ++j) {
 		__NOP();
 	}
 }
 
 void delayMicroseconds (uint64_t ticks) {
-	for (unsigned long j = 0; j < ticks*10; ++j) {
+	for (unsigned long j = 0; j < ticks*72; ++j) {
 		__NOP();
 	}
 }
@@ -184,14 +184,14 @@ uint8_t read_payload(void* buf, uint8_t data_len)
 
 /****************************************************************************/
 
-uint8_t flush_rx(void)
+uint8_t radio_flush_rx(void)
 {
   return spiTrans( FLUSH_RX );
 }
 
 /****************************************************************************/
 
-uint8_t flush_tx(void)
+uint8_t radio_flush_tx(void)
 {
   return spiTrans( FLUSH_TX );
 }
@@ -433,8 +433,8 @@ uint8_t radio_begin(void)
   setChannel(76);
 
   // Flush buffers
-  flush_rx();
-  flush_tx();
+  radio_flush_rx();
+  radio_flush_tx();
 
   powerUp(); //Power up by default when begin() is called
 
@@ -479,7 +479,7 @@ void radio_startListening(void)
   // Flush buffers
   //flush_rx();
   if(read_register(FEATURE) & _BV(EN_ACK_PAY)){
-	flush_tx();
+	radio_flush_tx();
   }
 
   // Go!
@@ -500,7 +500,7 @@ void radio_stopListening(void)
 
   if(read_register(FEATURE) & _BV(EN_ACK_PAY)){
     delayMicroseconds(txDelay); //200
-	flush_tx();
+	radio_flush_tx();
   }
   //flush_rx();
   write_register(NRF_CONFIG, ( read_register(NRF_CONFIG) ) & ~_BV(PRIM_RX) );
@@ -550,10 +550,6 @@ void errNotify(){
 //Similar to the previous write, clears the interrupt flags
 uint8_t radio_write_multicast( const void* buf, uint8_t len, const uint8_t multicast )
 {
-	uint8_t rbuf[5];
-	read_register_buf(RX_ADDR_P0,rbuf, addr_width);
-	read_register_buf(TX_ADDR,rbuf, addr_width);
-
 	//Start Writing
 	startFastWrite(buf,len,multicast);
 
@@ -581,7 +577,7 @@ uint8_t radio_write_multicast( const void* buf, uint8_t len, const uint8_t multi
 
   //Max retries exceeded
   if( status & _BV(MAX_RT)){
-  	flush_tx(); //Only going to be 1 packet int the FIFO at a time using this method, so just flush
+  	radio_flush_tx(); //Only going to be 1 packet int the FIFO at a time using this method, so just flush
   	return 0;
   }
 	//TX OK 1 or 0
@@ -727,7 +723,7 @@ uint8_t radio_txStandBy(){
 		if( get_status() & _BV(MAX_RT)){
 			write_register(NRF_STATUS,_BV(MAX_RT) );
 			ce(LOW);
-			flush_tx();    //Non blocking, flush the data
+			radio_flush_tx();    //Non blocking, flush the data
 			return 0;
 		}
 		#if defined (FAILURE_HANDLING) || defined (RF24_LINUX)
@@ -811,7 +807,7 @@ uint8_t radio_getDynamicPayloadSize(void)
   endTransaction();
   #endif
 
-  if(result > 32) { flush_rx(); delay(2); return 0; }
+  if(result > 32) { radio_flush_rx(); delay(2); return 0; }
   return result;
 }
 
@@ -819,8 +815,7 @@ uint8_t radio_getDynamicPayloadSize(void)
 
 uint8_t radio_available(void)
 {
-	return !GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_0);
-  //return radio_available_in_pipe(0xff);
+   return radio_available_in_pipe(0xff);
 }
 
 /****************************************************************************/
@@ -1234,10 +1229,4 @@ void radio_setRetries(uint8_t delay, uint8_t count)
  write_register(SETUP_RETR,(delay&0xf)<<ARD | (count&0xf)<<ARC);
 }
 
-// Возвращает 1, если на линии IRQ активный (низкий) уровень.
-uint8_t radio_is_interrupt() {
-// использовать этот вариант только в крайних случаях!!!
-	return GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_0);
-	return (read_register(NRF_STATUS) & ((1 << RX_DR) | (1 << TX_DS) | (1 << MAX_RT))) ?
-			1 : 0;
-}
+

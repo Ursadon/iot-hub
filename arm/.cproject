@@ -30,7 +30,7 @@
 								<option id="gnu.c.compiler.option.dialect.std.848897185" name="Language standard" superClass="gnu.c.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.c.compiler.dialect.c11" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.2102247397" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_OPI_"/>
-									<listOptionValue builtIn="false" value="_DEBUG_"/>
+									<listOptionValue builtIn="false" value="_PRINTF_DEBUG_"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1679080448" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -45,7 +45,7 @@
 								<option id="gnu.cpp.compiler.option.dialect.std.1916166074" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.cpp.compiler.dialect.c++11" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1947112533" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_OPI_"/>
-									<listOptionValue builtIn="false" value="_DEBUG_"/>
+									<listOptionValue builtIn="false" value="_PRINTF_DEBUG_"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2076418666" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -109,7 +109,7 @@
 								<option id="gnu.c.compiler.option.dialect.std.648863305" name="Language standard" superClass="gnu.c.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.c.compiler.dialect.c11" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.512690156" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_RPI_"/>
-									<listOptionValue builtIn="false" value="_DEBUG_"/>
+									<listOptionValue builtIn="false" value="_PRINTF_DEBUG_"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.76994535" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -119,7 +119,7 @@
 								<option id="gnu.cpp.compiler.option.other.other.1871759148" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -marm -march=armv6zk -mcpu=arm1176jzf-s -mfpu=vfp" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.763228174" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_RPI_"/>
-									<listOptionValue builtIn="false" value="_DEBUG_"/>
+									<listOptionValue builtIn="false" value="_PRINTF_DEBUG_"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.include.paths.1280302141" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/include}&quot;"/>
