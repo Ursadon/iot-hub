@@ -145,9 +145,7 @@ void jobRouting() {
 	while (1) {
 
 		nrf_.lock();
-		cout << WHITE << CYAN << printDate() << RESET
-				<< "<- [TX] Sending uRIP routes (count = "
-				<< (unsigned int) routingTableCount << ")" << RESET << endl;
+		//cout << WHITE << CYAN << printDate() << RESET << "<- [TX] Sending uRIP routes (count = " << (unsigned int) routingTableCount << ")" << RESET << endl;
 		uRIP_sendRoutes(0x00);
 		nrf_.unlock();
 		boost::this_thread::sleep_for(boost::chrono::seconds(2));

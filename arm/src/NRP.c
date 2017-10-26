@@ -47,7 +47,7 @@ uint64_t convertPipeAddress(uint8_t address) {
 
 bool NRP_send_packet(uint8_t host, NRP_packet packet) {
 	uint8_t header = (packet.version << 4) + packet.type;
-	uint8_t buf[32] = { header, packet.destination, packet.source, 0 };
+	uint8_t buf[32] = { header, packet.destination, packet.source, packet.ttl };
 
 	for (int i = 0; i < (uint8_t)packet._length; i++) {
 		buf[i + 4] = packet.data[i];
@@ -65,7 +65,10 @@ void NRP_parsePacket(NRP_packet packet) {
 		return;
 	}
 	if (packet.type == uRIP_update) { // uRIP update
-		__DEBUG(printf("%s%s%s-> [RX] [info] uRIP request for my routes %s\n", CYAN, c_printDate(), WHITE, RESET););
+		if (((packet.source == 0xa7) | (packet.source == 0x17)) & ((rx_addr == 0xa7) | (rx_addr == 0x17))) {
+			return;
+		}
+		//__DEBUG(printf("%s%s%s-> [RX] [info] uRIP request for my routes %s\n", CYAN, c_printDate(), WHITE, RESET););
 
 		// TODO: проверять корректность данных 0 остаток от деления на 3 должен быть равен 0
 		// Конвертируем 1d массив в 2d и сверяем с маршрутами
@@ -102,7 +105,7 @@ void uRIP_updateRecord(uint8_t route, uint8_t metrics, uint8_t nexthop) {
 		routingTable[route_id][NextHop] = nexthop;
 		bubble_sort();
 		if (route_id == 0xff) {
-			__DEBUG(printf("%s%s%s-> [RX] [info] New route: 0x%02X via 0x%02X M=%u%s\n", CYAN, c_printDate(), BLUE, (unsigned int) route, (unsigned int) nexthop, (unsigned int) metrics,RESET););
+			__DEBUG(printf("%s%s%s-> [RX] [info] New route: 0x%02X via 0x%02X M=%u%s\n", CYAN, c_printDate(), BLUE, (unsigned int) route, (unsigned int) nexthop, (unsigned int) metrics+1,RESET););
 			routingTableCount++;
 		}
 	} else {
