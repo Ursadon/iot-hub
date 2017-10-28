@@ -9,6 +9,10 @@
  */
 
 #include "stm32f10x.h"
+#include "stm32f10x_gpio.h"
+#include "stm32f10x_rcc.h"
+#include "stm32f10x_spi.h"
+
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
@@ -19,6 +23,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include "additionals.h"
+#include <stdio.h>
 
 #define UNUSED __attribute__ ((unused))
 unsigned char data[] = { 0xAA, 0xBA, 0xCA, 0xFA };
@@ -29,8 +34,7 @@ SemaphoreHandle_t xSPIsemaphore;
  * A2 - CE
  * A1 - CSN
  */
-bool radio_send(uint64_t address, const void* buf, uint8_t len,
-		const bool multicast) {
+bool radio_send(uint64_t address, const void* buf, uint8_t len, const bool multicast) {
 	bool rval;
 	radio_openWritingPipe(BASEADDR + address);
 	radio_stopListening();
@@ -44,7 +48,7 @@ void nrf24_setupPins(void) {
 	SPI_InitTypeDef SPI_InitStructure;
 	GPIO_InitTypeDef GPIO_InitStructure;
 
-	// SPI pins
+	    // SPI pins
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
@@ -81,9 +85,9 @@ void nrf24_setupPins(void) {
 }
 
 uint8_t radio_is_interrupt() {
-	if(!GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_0)){
-		if ( xSemaphoreTake( xSPIsemaphore, ( TickType_t ) 1000 ) == pdTRUE) {
-			if ( read_register(NRF_STATUS) & _BV(RX_DR) ){
+	if (!GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_0)) {
+		if (xSemaphoreTake(xSPIsemaphore, (TickType_t) 1000) == pdTRUE) {
+			if (read_register(NRF_STATUS) & _BV(RX_DR)) {
 				xSemaphoreGive(xSPIsemaphore);
 				return 1;
 			}
@@ -99,9 +103,9 @@ void vScanRF(void *pvParameters) {
 
 	for (;;) {
 		if (radio_is_interrupt()) {
-			if ( xSemaphoreTake( xSPIsemaphore, ( TickType_t ) 1000 ) == pdTRUE) {
-				/* We were able to obtain the semaphore and can now access the
-				 shared resource. */
+			if (xSemaphoreTake(xSPIsemaphore, (TickType_t) 1000) == pdTRUE) {
+			    /* We were able to obtain the semaphore and can now access the
+			     shared resource. */
 				len = radio_getDynamicPayloadSize();
 				radio_read(receivePayload, len);
 				// Display it on screen
@@ -115,35 +119,40 @@ void vScanRF(void *pvParameters) {
 					if ((uint8_t)packet._length > 0) {
 						for (int i = 0; i < packet._length; i++) {
 							packet.data[i] = receivePayload[4 + i];
-						};
+						}
 					}
 					NRP_parsePacket(packet);
-				} else {
-					// error!
+				}
+				else {
+				    // error!
 				}
 				/* We have finished accessing the shared resource.  Release the
 				 semaphore. */
 				xSemaphoreGive(xSPIsemaphore);
-			};
-		};
+			}
+			;
+		}
+		;
 	}
 }
 
 void vDiscovery(void *pvParameters) {
 	while (1) {
-		if ( xSemaphoreTake( xSPIsemaphore, ( TickType_t ) 1000 ) == pdTRUE) {
-//			radio_stopListening();
-//			radio_send(0x00,data,4,1);
-//			radio_startListening();
+		if (xSemaphoreTake(xSPIsemaphore, (TickType_t) 1000) == pdTRUE) {
+		//			radio_stopListening();
+		//			radio_send(0x00,data,4,1);
+		//			radio_startListening();
+			uRIP_garbageCollector();
 			uRIP_sendRoutes(0x00);
 			xSemaphoreGive(xSPIsemaphore);
 		}
 		vTaskDelay(2000);
 	}
 }
-void vLed(UNUSED void *pvParameters) {
 
+void vLed(UNUSED void *pvParameters) {
 	GPIO_InitTypeDef GPIO_InitStructure;
+
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
@@ -151,9 +160,9 @@ void vLed(UNUSED void *pvParameters) {
 	GPIO_Init(GPIOC, &GPIO_InitStructure);
 
 	for (;;) { //-V776
-//		GPIO_ResetBits(GPIOC, GPIO_Pin_13);
-//		vTaskDelay(500);
-//		GPIO_SetBits(GPIOC, GPIO_Pin_13);
+	//		GPIO_ResetBits(GPIOC, GPIO_Pin_13);
+	//		vTaskDelay(500);
+	//		GPIO_SetBits(GPIOC, GPIO_Pin_13);
 		vTaskDelay(500);
 	}
 }
@@ -163,13 +172,11 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask, signed char *pcTaskName) 
 
 int main(void) {
 	nrf24_setupPins();
-
-// Перед включением питания чипа и сигналом CE должно пройти время достаточное для начала работы осциллятора
-// Для типичных резонаторов с эквивалентной индуктивностью не более 30мГн достаточно 1.5 мс
-	for (unsigned long j = 0; j < 50000; ++j) {
+	// Перед включением питания чипа и сигналом CE должно пройти время достаточное для начала работы осциллятора
+	// Для типичных резонаторов с эквивалентной индуктивностью не более 30мГн достаточно 1.5 мс
+	for (unsigned long j = 0; j < SystemCoreClock / 1000 * 1.5; ++j) {
 		__NOP();
 	}
-
 	radio_begin();                           // Setup and configure rf radio
 	setChannel(40);
 	setPALevel(RF24_PA_MAX);
@@ -195,11 +202,8 @@ int main(void) {
 
 	xSPIsemaphore = xSemaphoreCreateMutex();
 
-	xTaskCreate(vLed, "vLed", configMINIMAL_STACK_SIZE, NULL,
-	tskIDLE_PRIORITY + 1, (xTaskHandle *) NULL);
-	xTaskCreate(vScanRF, "vScanRF", (uint16_t) 120, NULL,
-	tskIDLE_PRIORITY + 1, (xTaskHandle *) NULL);
-	xTaskCreate(vDiscovery, "vDiscovery", configMINIMAL_STACK_SIZE, NULL,
-	tskIDLE_PRIORITY + 1, (xTaskHandle *) NULL);
+	xTaskCreate(vLed, "vLed", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, (xTaskHandle *) NULL);
+	xTaskCreate(vScanRF, "vScanRF", (uint16_t) 120, NULL, tskIDLE_PRIORITY + 1, (xTaskHandle *) NULL);
+	xTaskCreate(vDiscovery,	"vDiscovery", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, (xTaskHandle *) NULL);
 	vTaskStartScheduler();
 } //-V591

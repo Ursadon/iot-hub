@@ -147,6 +147,7 @@ void jobRouting() {
 		nrf_.lock();
 		//cout << WHITE << CYAN << printDate() << RESET << "<- [TX] Sending uRIP routes (count = " << (unsigned int) routingTableCount << ")" << RESET << endl;
 		uRIP_sendRoutes(0x00);
+		uRIP_garbageCollector();
 		nrf_.unlock();
 		boost::this_thread::sleep_for(boost::chrono::seconds(2));
 	}
@@ -173,23 +174,23 @@ void jobReadTerminal() {
 			nrf_.lock();
 			if (tokens.at(0) == "route" || tokens.at(0) == "3") {
 				unsigned int rcount = 0;
-				qsort((unsigned int*) &routingTable, 256,
-						sizeof(unsigned int[3]), sortByMetrics);
-
-				cout << "Host  |  Metric  |  Nexthop" << endl
-						<< "----------------------------" << endl;
+				cout << "Host  |  Metric  |  Nexthop  | Timer " << endl
+						<< "------------------------------------" << endl;
 				for (unsigned int i = 0; i < 256; i++) {
 					if (routingTable[i][0] == 0xFF)
 						break;
 					cout << "0x" << std::hex << std::noshowbase << std::setw(2)
 							<< std::setfill('0') << std::uppercase
-							<< routingTable[i][0] << "  |   ";
+							<< routingTable[i][Host] << "  |   ";
 					cout << std::dec << std::noshowbase << std::setw(3)
 							<< std::setfill('0') << std::uppercase
-							<< routingTable[i][1] << "    |    ";
+							<< routingTable[i][Metrics] << "    |    ";
 					cout << std::hex << std::noshowbase << std::setw(2)
 							<< std::setfill('0') << std::uppercase
-							<< routingTable[i][2] << endl;
+							<< routingTable[i][NextHop] << "    |    ";
+					cout << std::hex << std::noshowbase << std::setw(2)
+							<< std::setfill('0') << std::uppercase
+							<< routingTable[i][Timer] << endl;
 					rcount++;
 				}
 				cout << "Total: " << std::dec << rcount << endl;
@@ -218,7 +219,7 @@ void jobReadTerminal() {
 					cout << "Send OK" << endl;
 				}
 			} else {
-				cout << RED << "Host not found!" << RESET << endl;
+				__DEBUG(printf("%s%s%s-> [RX] [error] No route to host: 0x%02X %s\n", CYAN, c_printDate(), RED, (unsigned int)j, RESET) ;);
 			}
 		}
 		nrf_.unlock();
@@ -240,7 +241,7 @@ int main(int argc, char** argv) {
 	radio.setCRCLength(RF24_CRC_16);
 
 	// Open 6 pipes for readings ( 5 plus pipe0, also can be used for reading )
-	radio.openWritingPipe(0xA8A8A8A8A0LL);
+	radio.openWritingPipe(0xa0a1f0f100);
 	radio.openReadingPipe(1, BASEADDR);
 	radio.openReadingPipe(2, convertPipeAddress(rx_addr));
 	//
