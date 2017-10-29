@@ -52,7 +52,7 @@ extern "C" {
 #define ROUTE_GARBAGE_TIMER 6
 #define ROUTE_TIMEOUT_TIMER 4
 	enum Route { Host = 0, Metrics, NextHop, Timer };
-	enum PacketType { ptData = 0, uRIP_update } PacketType;
+	enum PacketType { ptData = 0, uRIP_update, MCUcontrol } PacketType;
 
 	unsigned int routingTableCount;
 	unsigned int routingTable[256][4];
@@ -74,7 +74,7 @@ extern "C" {
 	uint8_t uRIP_lookuphost(uint8_t host);
 	void uRIP_flush();
 	void uRIP_updateRecord(uint8_t route, uint8_t metrics, uint8_t nexthop);
-	bool uRIP_sendRoutes(uint8_t host);
+	void uRIP_sendRoutes(uint8_t host);
 	void uRIP_deleteRoute(uint8_t route);
 	void uRIP_garbageCollector();
 	uint64_t convertPipeAddress(uint8_t address);

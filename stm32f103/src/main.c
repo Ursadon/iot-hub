@@ -96,6 +96,37 @@ uint8_t radio_is_interrupt() {
 	}
 	return 0;
 }
+void CMD_parser(NRP_packet packet)
+{
+	if ((packet.type == ptData) && (packet._length == 1))
+	{
+		if (packet.data[0] == 8) //reset
+		{
+			NVIC_SystemReset();
+		}
+		if (packet.data[0] == 3) //Get RT
+		{
+			NRP_packet packet_send;
+			packet_send.version = 1;
+			packet_send.type = ptData;
+			packet_send.source = rx_addr;
+			packet_send.destination = packet.source;
+			packet_send.ttl = 0;
+			//packet._length = routingTableCount * 3
+			uint8_t j;
+			for (unsigned int i = 0; i < routingTableCount * 3; i++) {
+				j = i % 27;
+				// Converting 2d array to 1d
+				packet_send.data[j] = routingTable[i / 3][i % 3];
+				if ((j == 26) || (i == (routingTableCount * 3) - 1))
+				{
+					packet_send._length = j + 1;
+					NRP_send_packet(packet.source, packet_send);
+				}
+			}
+		}
+	}
+}
 void vScanRF(void *pvParameters) {
 	uint8_t receivePayload[32];
 	static uint8_t len;
@@ -135,18 +166,19 @@ void vScanRF(void *pvParameters) {
 		;
 	}
 }
-
+static uint8_t nrf_status;
 void vDiscovery(void *pvParameters) {
 	while (1) {
 		if (xSemaphoreTake(xSPIsemaphore, (TickType_t) 1000) == pdTRUE) {
 		//			radio_stopListening();
 		//			radio_send(0x00,data,4,1);
 		//			radio_startListening();
+			nrf_status = read_register(NRF_STATUS);
 			uRIP_garbageCollector();
 			uRIP_sendRoutes(0x00);
 			xSemaphoreGive(xSPIsemaphore);
 		}
-		vTaskDelay(2000);
+		vTaskDelay(1000);
 	}
 }
 

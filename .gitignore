@@ -34,3 +34,4 @@
 arm/OrangePI
 arm/RaspberryPI
 stm32f103/Debug
+arm_unit_test

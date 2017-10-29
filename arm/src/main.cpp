@@ -152,7 +152,9 @@ void jobRouting() {
 		boost::this_thread::sleep_for(boost::chrono::seconds(2));
 	}
 }
+void CMD_parser(NRP_packet packet) {
 
+}
 void jobReadTerminal() {
 	uint8_t argc = 0;
 	uint8_t j = 0;

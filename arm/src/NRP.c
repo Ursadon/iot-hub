@@ -65,29 +65,29 @@ bool NRP_send_packet(uint8_t host, NRP_packet packet) {
 }
 
 void NRP_parsePacket(NRP_packet packet) {
-
 	if (packet.ttl == 254) {
 		__DEBUG(printf("%s%s%s-> [RX] [warning] Packet dropped - ttl exceeded %s\n", CYAN, c_printDate(), RED, RESET) ;);
 		return;
 	}
 	if (packet.type == uRIP_update) { // uRIP update
-		if (((packet.source == 0xa7) | (packet.source == 0x17))
-		        & ((rx_addr == 0xa7) | (rx_addr == 0x17))) {
+//		if (((packet.source == 0xa7) | (packet.source == 0x17))
+//		        & ((rx_addr == 0xa7) | (rx_addr == 0x17))) {
+//			return;
+//		}
+		//__DEBUG(printf("%s%s%s-> [RX] [info] uRIP request for my routes %s\n", CYAN, c_printDate(), WHITE, RESET););
+		if (packet._length % 3 == 0)
+		{
+			for (int i = 0; i < packet._length / 3; i++)
+			{
+				uRIP_updateRecord(packet.data[i * 3 + 0], packet.data[i * 3 + 1], packet.source);
+			}
 			return;
 		}
-		//__DEBUG(printf("%s%s%s-> [RX] [info] uRIP request for my routes %s\n", CYAN, c_printDate(), WHITE, RESET););
-
-		        // TODO: проверять корректность данных 0 остаток от деления на 3 должен быть равен 0
-		        // Конвертируем 1d массив в 2d и сверяем с маршрутами
-		for (int i = 0; i < packet._length / 3; i++) {
-			uRIP_updateRecord(packet.data[i * 3 + 0],
-				packet.data[i * 3 + 1],
-				packet.source);
+		else
+		{
+			__DEBUG(printf("%s%s%s-> [RX] [err] Incorrect uRIP packet length %s\n", CYAN, c_printDate(), RED, RESET) ;);
 		}
-		return;
 	}
-	;
-
 	if (packet.destination != rx_addr) { // transit packet
 		__DEBUG(printf("%s%s%s-> [RX] (TRANSIT) to: 0x%02X%s\n", CYAN, c_printDate(), BLUE, (unsigned int)packet.destination, RESET) ;);
 		packet.ttl++;
@@ -101,26 +101,41 @@ void NRP_parsePacket(NRP_packet packet) {
 	}
 	else {
 		__DEBUG(printf("%s%s%s-> [RX] (TO_ME) %s\n", CYAN, c_printDate(), BLUE, RESET) ; NRP_dump_packet(packet) ;);
+		CMD_parser(packet);
 	}
 }
 
 void uRIP_updateRecord(uint8_t route, uint8_t metrics, uint8_t nexthop) {
+	metrics++;
+	if ((route == 0xff) | (route == 0x00)) {
+		__DEBUG(printf("%s%s%s-> [RX] [err] Wrong route: 0x%02X %s\n", CYAN, c_printDate(), RED, (unsigned int)route, RESET) ;);
+		return;
+	}
 	if (metrics == 16) { // request to delete route from routeDB
+		if (route == rx_addr)
+			return;
 		__DEBUG(printf("%s%s%s-> [RX] [info] Deleting route 0x%02X %s\n", CYAN, c_printDate(), YELLOW, (unsigned int)route, RESET) ;);
 		uRIP_deleteRoute(route);
 		return;
 	}
 	uint8_t route_id = uRIP_lookuphost(route);
-	if ((route_id == 0xff) | (metrics < routingTable[route_id][Metrics])) { // New route or more specific
+	if ((metrics <= routingTable[route_id][Metrics]) | (route_id == 0xff)) { // New route or more specific
 		{
-			routingTable[route_id][Host] = route;
-			routingTable[route_id][Metrics] = metrics + 1;
-			routingTable[route_id][NextHop] = nexthop;
 			routingTable[route_id][Timer] = 0;
-			uRIP_sortDatabase();
-			if (route_id == 0xff) { // New route?
-				__DEBUG(printf("%s%s%s-> [RX] [info] New route: 0x%02X via 0x%02X M=%u%s\n", CYAN, c_printDate(), BLUE, (unsigned int) route, (unsigned int) nexthop, (unsigned int) metrics + 1, RESET) ;);
+			if (route_id == 0xff)
+			{ // New route?
+				__DEBUG(printf("%s%s%s-> [RX] [info] New route: 0x%02X via 0x%02X M=%u%s\n", CYAN, c_printDate(), BLUE, (unsigned int) route, (unsigned int) nexthop, (unsigned int) metrics, RESET) ;);
+				routingTable[route_id][Host] = route;
+				routingTable[route_id][Metrics] = metrics;
+				routingTable[route_id][NextHop] = nexthop;
+				uRIP_sortDatabase();
 				routingTableCount++;
+			}
+			else
+			{
+				routingTable[route_id][Host] = route;
+				routingTable[route_id][Metrics] = metrics;
+				routingTable[route_id][NextHop] = nexthop;
 			}
 		}
 	}
@@ -150,6 +165,7 @@ void uRIP_garbageCollector() {
 			routingTable[route_id][Timer] = 0;
 			routingTableCount--;
 			uRIP_sortDatabase();
+			uRIP_sendRoutes(0x00);
 			return;
 		}
 		else if (routingTable[route_id][Timer] > ROUTE_TIMEOUT_TIMER) {
@@ -160,6 +176,7 @@ void uRIP_garbageCollector() {
 		routingTable[route_id][Timer]++;
 	}
 }
+
 uint8_t uRIP_lookuphost(uint8_t host) {
 	for (int i = 0; i < routingTableCount; i++) {
 		if (routingTable[i][Host] == host) {
@@ -187,18 +204,23 @@ void uRIP_flush() {
  * @param host
  * @return
  */
-bool uRIP_sendRoutes(uint8_t host) {
+void uRIP_sendRoutes(uint8_t host) {
 	NRP_packet packet;
 	packet.version = 1;
 	packet.type = uRIP_update;
 	packet.source = rx_addr;
 	packet.destination = host;
 	packet.ttl = 0;
-	packet._length = routingTableCount * 3;
-	// Converting 2d array to 1d
+	//packet._length = routingTableCount * 3
+	uint8_t j;
 	for (unsigned int i = 0; i < routingTableCount * 3; i++) {
-		packet.data[i] = routingTable[i / 3][i % 3];
+		j = i % 27;
+		// Converting 2d array to 1d
+		packet.data[j] = routingTable[i / 3][i % 3];
+		if ((j == 26) || (i == (routingTableCount * 3) - 1))
+		{
+			packet._length = j + 1;
+			NRP_send_packet(host, packet);
+		}
 	}
-
-	return NRP_send_packet(host, packet);
 }

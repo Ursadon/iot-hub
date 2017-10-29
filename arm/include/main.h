@@ -13,6 +13,7 @@
 extern "C" {
 #endif
 
+void CMD_parser(NRP_packet packet);
 bool radio_send(uint64_t address, const void* buf, uint8_t len, const bool multicast);
 void NRP_dump_packet(NRP_packet packet);
 
