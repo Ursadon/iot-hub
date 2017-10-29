@@ -44,6 +44,9 @@
 extern "C" {
 #endif
 
+#define get_max(a,b) (a>b?a:b)
+#define GET_MIN(a,b) (a<b?a:b)
+	
 //the following are UBUNTU/LINUX ONLY terminal color codes.
 #define RESET   "\033[0m"
 #define BLACK   "\033[30m"      /* Black */

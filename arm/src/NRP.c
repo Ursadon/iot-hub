@@ -75,11 +75,11 @@ void NRP_parsePacket(NRP_packet packet) {
 //			return;
 //		}
 		//__DEBUG(printf("%s%s%s-> [RX] [info] uRIP request for my routes %s\n", CYAN, c_printDate(), WHITE, RESET););
-		if (packet._length % 3 == 0)
+		if (packet._length % 2 == 0)
 		{
-			for (int i = 0; i < packet._length / 3; i++)
+			for (int i = 0; i < packet._length / 2; i++)
 			{
-				uRIP_updateRecord(packet.data[i * 3 + 0], packet.data[i * 3 + 1], packet.source);
+				uRIP_updateRecord(packet.data[i * 2 + 0], packet.data[i * 2 + 1], packet.source);
 			}
 			return;
 		}
@@ -106,41 +106,73 @@ void NRP_parsePacket(NRP_packet packet) {
 }
 
 void uRIP_updateRecord(uint8_t route, uint8_t metrics, uint8_t nexthop) {
-	metrics++;
-	if ((route == 0xff) | (route == 0x00)) {
-		__DEBUG(printf("%s%s%s-> [RX] [err] Wrong route: 0x%02X %s\n", CYAN, c_printDate(), RED, (unsigned int)route, RESET) ;);
+	if ((metrics > 16) || (route == 0x00) || (route == rx_addr) || (route == 0xff)) {
+		// Incorrect routes
 		return;
 	}
-	if (metrics == 16) { // request to delete route from routeDB
-		if (route == rx_addr)
-			return;
-		__DEBUG(printf("%s%s%s-> [RX] [info] Deleting route 0x%02X %s\n", CYAN, c_printDate(), YELLOW, (unsigned int)route, RESET) ;);
+	if (metrics == 16)
+	{
 		uRIP_deleteRoute(route);
 		return;
 	}
+	bool start_deleting_process = false;
+	if (metrics == 15)
+		start_deleting_process = true;
+
+	metrics++;
+	metrics = GET_MIN(metrics, 16);
+
 	uint8_t route_id = uRIP_lookuphost(route);
-	if ((metrics <= routingTable[route_id][Metrics]) | (route_id == 0xff)) { // New route or more specific
+	/*
+	 * Добавляем запись, если таковой не обнаружено
+	 */
+	if (route_id == 0xff)
+	{
+		if (metrics == 16)
 		{
-			routingTable[route_id][Timer] = 0;
-			if (route_id == 0xff)
-			{ // New route?
-				__DEBUG(printf("%s%s%s-> [RX] [info] New route: 0x%02X via 0x%02X M=%u%s\n", CYAN, c_printDate(), BLUE, (unsigned int) route, (unsigned int) nexthop, (unsigned int) metrics, RESET) ;);
-				routingTable[route_id][Host] = route;
-				routingTable[route_id][Metrics] = metrics;
-				routingTable[route_id][NextHop] = nexthop;
-				uRIP_sortDatabase();
-				routingTableCount++;
-			}
-			else
-			{
-				routingTable[route_id][Host] = route;
-				routingTable[route_id][Metrics] = metrics;
-				routingTable[route_id][NextHop] = nexthop;
-			}
+			// Не добавляем записи, помеченные на удаление (т.е. с метрикой 16)
+			return;
 		}
+		routingTable[route_id][Host] = route;
+		routingTable[route_id][Metrics] = metrics;
+		routingTable[route_id][NextHop] = nexthop;
+		routingTable[route_id][Timer] = 0;
+		uRIP_sortDatabase();
+		routingTableCount++;
+		__DEBUG(printf("%s%s%s-> [RX] [info] New route: 0x%02X via 0x%02X M=%u%s\n", CYAN, c_printDate(), BLUE, (unsigned int) route, (unsigned int) nexthop, (unsigned int) metrics, RESET) ;);
+		//TODO: route change - triggered update
+		return;
 	}
-	else {
-		return; // Такая метрика маршрута уже есть - маргрут игнорируем
+	/*
+	 * Проверяем таблицу маршрутизации на предмет наличия записи, адрес которой в точности совпадается с полученным в RTE
+	 * Если это запись получена от того же маршрутизатора, что и RTE - реинициализируем timeout
+	 */
+	if ((routingTable[route_id][Metrics] == metrics) && (routingTable[route_id][NextHop] == nexthop))
+	{
+		routingTable[route_id][Timer] = 0;
+		return;
+	}
+	/*
+	 * Если запись получена от того же маршрутизатора, что и RTE, и метрики разные, или
+	 * полученная для записи метрика меньше, чем содержащаяся в таблице маршрутизации
+	 */
+	if ((metrics != routingTable[route_id][Metrics]) && (routingTable[route_id][NextHop] == nexthop) |
+		(metrics < routingTable[route_id][Metrics]) && (routingTable[route_id][NextHop] != nexthop))
+	{
+		//routingTable[route_id][Timer] = 0;
+		routingTable[route_id][NextHop] = nexthop;
+		routingTable[route_id][Metrics] = metrics;
+		// TODO: route change - triggered update
+		if (start_deleting_process)
+		{
+			__DEBUG(printf("%s%s%s-> [RX] [warn] Recieved new route, but maximum metric reached 0x%02X %s\n", CYAN, c_printDate(), YELLOW, (unsigned int)route, RESET) ;);
+			routingTable[route_id][Timer] = ROUTE_TIMEOUT_TIMER;
+		}
+		else
+		{
+				routingTable[route_id][Timer] = 0;
+		}
+		return;
 	}
 }
 void uRIP_deleteRoute(uint8_t route) {
@@ -165,13 +197,13 @@ void uRIP_garbageCollector() {
 			routingTable[route_id][Timer] = 0;
 			routingTableCount--;
 			uRIP_sortDatabase();
-			uRIP_sendRoutes(0x00);
 			return;
 		}
-		else if (routingTable[route_id][Timer] > ROUTE_TIMEOUT_TIMER) {
-			__DEBUG(printf("%s%s%s <internal> [info] Marked route to delete: 0x%02X %s\n", CYAN, c_printDate(), YELLOW, (unsigned int) routingTable[route_id][Host], RESET) ;);
+		else if (routingTable[route_id][Timer] == ROUTE_TIMEOUT_TIMER) {
+			__DEBUG(printf("%s%s%s <internal> [info] Marked route to delete: 0x%02X %s\n", CYAN, c_printDate(), YELLOW, (unsigned int) routingTable[route_id][Host], RESET););
 			routingTable[route_id][Metrics] = 16;
-			uRIP_sendRoutes(0x00);
+			//TODO: route change - triggered update
+			//uRIP_sendRoutes(0x00);
 		}
 		routingTable[route_id][Timer]++;
 	}
@@ -195,7 +227,7 @@ void uRIP_flush() {
 	}
 	routingTable[0][Host] = rx_addr;
 	routingTable[0][Metrics] = 0;
-	routingTable[0][NextHop] = 0;
+	routingTable[0][NextHop] = rx_addr;
 	routingTable[0][Timer] = 0;
 	routingTableCount = 1;
 }
@@ -213,11 +245,11 @@ void uRIP_sendRoutes(uint8_t host) {
 	packet.ttl = 0;
 	//packet._length = routingTableCount * 3
 	uint8_t j;
-	for (unsigned int i = 0; i < routingTableCount * 3; i++) {
-		j = i % 27;
+	for (unsigned int i = 0; i < routingTableCount * 2; i++) {
+		j = i % 28;
 		// Converting 2d array to 1d
-		packet.data[j] = routingTable[i / 3][i % 3];
-		if ((j == 26) || (i == (routingTableCount * 3) - 1))
+		packet.data[j] = routingTable[i / 2][i % 2];
+		if ((j == 27) || (i == (routingTableCount * 2) - 1))
 		{
 			packet._length = j + 1;
 			NRP_send_packet(host, packet);

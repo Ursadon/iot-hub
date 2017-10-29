@@ -173,7 +173,6 @@ void vDiscovery(void *pvParameters) {
 		//			radio_stopListening();
 		//			radio_send(0x00,data,4,1);
 		//			radio_startListening();
-			nrf_status = read_register(NRF_STATUS);
 			uRIP_garbageCollector();
 			uRIP_sendRoutes(0x00);
 			xSemaphoreGive(xSPIsemaphore);
